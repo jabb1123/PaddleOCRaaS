@@ -65,10 +65,4 @@ jobs:
               repo: context.repo.repo,
               body: 'Documentation Preview\n\nDocumentation has been built. It will be available at `https://<your-username>.github.io/PaddleOCRaaS/` when merged to main.'
             })
-      
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: docs-site
-          path: site/
-          retention-days: 7
+
