@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PaddleOCR Review Queue</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            margin-bottom: 5px;
+        }
+        
+        .subtitle {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .upload-section {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .upload-area {
+            border: 2px dashed #3498db;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f9f9f9;
+        }
+        
+        .upload-area:hover {
+            border-color: #2980b9;
+            background: #f0f7ff;
+        }
+        
+        .upload-area.dragover {
+            border-color: #27ae60;
+            background: #f0fff4;
+        }
+        
+        .upload-area input {
+            display: none;
+        }
+        
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        
+        .upload-text {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        
+        .upload-hint {
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+        
+        .processing {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            background: #e8f4f8;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .processing.show {
+            display: block;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #3498db;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .queue-section {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .queue-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        
+        .queue-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border-left: 4px solid #3498db;
+        }
+        
+        .stat-number {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            margin-top: 5px;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .tab-button {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #7f8c8d;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .tab-button.active {
+            color: #2c3e50;
+            border-bottom-color: #3498db;
+        }
+        
+        .tab-button:hover {
+            color: #2c3e50;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .ocr-block {
+            background: #f8f9fa;
+            padding: 12px;
+            margin-bottom: 12px;
+            border-left: 3px solid #3498db;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .ocr-block-text {
+            color: #2c3e50;
+            margin-bottom: 8px;
+            word-break: break-word;
+        }
+        
+        .ocr-block-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 11px;
+            color: #95a5a6;
+        }
+        
+        .ocr-block-meta span {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .ocr-page-title {
+            font-size: 14px;
+            font-weight: 600;
+            background: #ecf0f1;
+            padding: 10px;
+            margin: 15px 0 10px 0;
+            border-radius: 4px;
+            color: #2c3e50;
+        }
+        
+        .task-label {
+            font-size: 12px;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 15px;
+        }
+        
+        .task-label {
+            font-size: 12px;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            margin-top: 5px;
+        }
+        
+        .task-list {
+            display: grid;
+            gap: 15px;
+        }
+        
+        .task-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            background: white;
+            transition: all 0.3s;
+        }
+        
+        .task-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-color: #3498db;
+        }
+        
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+        
+        .task-id {
+            font-size: 12px;
+            background: #ecf0f1;
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: #7f8c8d;
+        }
+        
+        .task-text {
+            font-size: 16px;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+        
+        .task-meta {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 15px;
+            font-size: 13px;
+        }
+        
+        .meta-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        
+        .meta-label {
+            font-weight: 600;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        
+        .meta-value {
+            color: #2c3e50;
+        }
+        
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .tag {
+            background: #e8f4f8;
+            color: #2980b9;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+        
+        .task-actions {
+            display: flex;
+            gap: 10px;
+            border-top: 1px solid #e0e0e0;
+            padding-top: 15px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-approve {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .btn-approve:hover {
+            background: #229954;
+        }
+        
+        .btn-reject {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .btn-reject:hover {
+            background: #c0392b;
+        }
+        
+        .btn-edit {
+            background: #f39c12;
+            color: white;
+        }
+        
+        .btn-edit:hover {
+            background: #d68910;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #7f8c8d;
+        }
+        
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+        
+        .error {
+            background: #fadbd8;
+            border: 1px solid #f5b7b1;
+            color: #c0392b;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .success {
+            background: #d5f4e6;
+            border: 1px solid #a9dfbf;
+            color: #27ae60;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.show {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        
+        .modal-body {
+            margin-bottom: 20px;
+        }
+        
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 13px;
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        
+        .btn-cancel {
+            background: #95a5a6;
+            color: white;
+        }
+        
+        .btn-cancel:hover {
+            background: #7f8c8d;
+        }
+        
+        .ocr-selector {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .ocr-selector label {
+            font-weight: 600;
+            color: #2c3e50;
+            min-width: 120px;
+        }
+        
+        .ocr-selector select {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+        }
+        
+        .ocr-selector select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+        }
+        
+        .ocr-document-info {
+            background: #ecf0f1;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #2c3e50;
+        }
+        
+        .ocr-document-info strong {
+            color: #2c3e50;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📋 PaddleOCR Review Queue</h1>
+            <p class="subtitle">Upload documents, extract tasks, review & approve</p>
+        </header>
+        
+        <div class="upload-section">
+            <div class="upload-area" id="uploadArea">
+                <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.gif" />
+                <div class="upload-icon">📄</div>
+                <div class="upload-text">Drop your file here or click to select</div>
+                <div class="upload-hint">Supports PDF, PNG, JPG, GIF (max 50MB)</div>
+            </div>
+            <div class="processing" id="processing">
+                <div class="spinner"></div>
+                <p style="margin-top: 10px; color: #2980b9;">Processing your document...</p>
+            </div>
+        </div>
+        
+        <div id="message"></div>
+        
+        <div class="queue-section">
+            <div class="queue-title">Review Queue</div>
+            
+            <div class="tabs">
+                <button class="tab-button active" onclick="switchTab('tasks')">Tasks</button>
+                <button class="tab-button" onclick="switchTab('ocr')">OCR Results</button>
+            </div>
+            
+            <div class="queue-stats">
+                <div class="stat-box">
+                    <div class="stat-number" id="pendingCount">0</div>
+                    <div class="stat-label">Pending</div>
+                </div>
+                <div class="stat-box" style="border-left-color: #27ae60;">
+                    <div class="stat-number" id="approvedCount">0</div>
+                    <div class="stat-label">Approved</div>
+                </div>
+                <div class="stat-box" style="border-left-color: #e74c3c;">
+                    <div class="stat-number" id="rejectedCount">0</div>
+                    <div class="stat-label">Rejected</div>
+                </div>
+            </div>
+            
+            <div class="tab-content active" id="tasks-tab">
+                <div id="taskContainer"></div>
+            </div>
+            
+            <div class="tab-content" id="ocr-tab">
+                <div id="ocrContainer"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">Edit Task</div>
+            <div class="modal-body">
+                <label>Task Text:</label>
+                <textarea id="editText"></textarea>
+                <label style="display: block; margin-top: 15px;">Reason for edit:</label>
+                <textarea id="editReason" style="min-height: 60px;"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+                <button class="btn-approve" onclick="saveEdit()">Save & Approve</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentEditTaskId = null;
+        
+        // Upload handling
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const processing = document.getElementById('processing');
+        const messageDiv = document.getElementById('message');
+        
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                uploadFile();
+            }
+        });
+        
+        fileInput.addEventListener('change', uploadFile);
+        
+        function uploadFile() {
+            const file = fileInput.files[0];
+            if (!file) return;
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            processing.classList.add('show');
+            messageDiv.innerHTML = '';
+            
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(r => r.json())
+            .then(data => {
+                processing.classList.remove('show');
+                if (data.error) {
+                    showError(data.error);
+                } else {
+                    showSuccess(`✓ Processed ${file.name}: ${data.queued} tasks queued for review`);
+                    loadQueue();
+                }
+            })
+            .catch(err => {
+                processing.classList.remove('show');
+                showError('Upload failed: ' + err.message);
+            });
+        }
+        
+        // Queue management
+        function loadQueue() {
+            fetch('/api/queue')
+                .then(r => r.json())
+                .then(data => {
+                    const pending = data.pending || [];
+                    const approved = data.approved || [];
+                    const rejected = data.rejected || [];
+                    
+                    document.getElementById('pendingCount').textContent = pending.length;
+                    document.getElementById('approvedCount').textContent = approved.length;
+                    document.getElementById('rejectedCount').textContent = rejected.length;
+                    
+                    if (pending.length === 0) {
+                        document.getElementById('taskContainer').innerHTML = `
+                            <div class="empty-state">
+                                <div class="empty-icon">✓</div>
+                                <p>No tasks pending review</p>
+                            </div>
+                        `;
+                    } else {
+                        document.getElementById('taskContainer').innerHTML = `<div class="task-list">
+                            ${pending.map(task => `
+                                <div class="task-card">
+                                    <div class="task-header">
+                                        <div>
+                                            <div class="task-text">${escapeHtml(task.raw_text)}</div>
+                                        </div>
+                                        <div class="task-id">ID: ${task.id}</div>
+                                    </div>
+                                    <div class="task-meta">
+                                        <div class="meta-item">
+                                            <div class="meta-label">Page</div>
+                                            <div class="meta-value">${escapeHtml(task.source_page)}</div>
+                                        </div>
+                                        <div class="meta-item">
+                                            <div class="meta-label">Confidence</div>
+                                            <div class="meta-value">${(task.confidence * 100).toFixed(0)}%</div>
+                                        </div>
+                                        <div class="meta-item">
+                                            <div class="meta-label">Reason</div>
+                                            <div class="meta-value">${escapeHtml(task.reason)}</div>
+                                        </div>
+                                    </div>
+                                    ${renderTags(task)}
+                                    <div class="task-actions">
+                                        <button class="btn-approve" data-task-id="${task.id}" onclick="approveTask(this.dataset.taskId)">Approve</button>
+                                        <button class="btn-edit" data-task-id="${task.id}" data-task-text="${escapeHtml(task.raw_text)}" onclick="openEditModal(this.dataset.taskId, this.dataset.taskText)">Edit</button>
+                                        <button class="btn-reject" data-task-id="${task.id}" onclick="rejectTask(this.dataset.taskId)">Reject</button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>`;
+                    }
+                });
+        }
+        
+        function renderTags(task) {
+            let html = '<div class="tag-list">';
+            
+            if (task.entities) {
+                const entities = typeof task.entities === 'string' ? JSON.parse(task.entities) : task.entities;
+                entities.forEach(e => {
+                    html += `<div class="tag">👤 ${escapeHtml(e.value)}</div>`;
+                });
+            }
+            
+            if (task.themes) {
+                const themes = typeof task.themes === 'string' ? JSON.parse(task.themes) : task.themes;
+                themes.forEach(t => {
+                    html += `<div class="tag">🏷️ ${escapeHtml(t.value)}</div>`;
+                });
+            }
+            
+            html += '</div>';
+            return html;
+        }
+        
+        function approveTask(taskId) {
+            taskId = parseInt(taskId);
+            fetch(`/api/approve/${taskId}`, { method: 'POST' })
+                .then(r => r.json())
+                .then(() => {
+                    showSuccess('✓ Task approved');
+                    loadQueue();
+                });
+        }
+        
+        function rejectTask(taskId) {
+            taskId = parseInt(taskId);
+            const reason = prompt('Reason for rejection:');
+            if (reason === null) return;
+            
+            fetch(`/api/reject/${taskId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reason })
+            })
+            .then(r => r.json())
+            .then(() => {
+                showSuccess('✓ Task rejected');
+                loadQueue();
+            });
+        }
+        
+        function openEditModal(taskId, text) {
+            currentEditTaskId = parseInt(taskId);
+            document.getElementById('editText').value = text;
+            document.getElementById('editReason').value = '';
+            document.getElementById('editModal').classList.add('show');
+        }
+        
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('show');
+            currentEditTaskId = null;
+        }
+        
+        function saveEdit() {
+            const newText = document.getElementById('editText').value;
+            const reason = document.getElementById('editReason').value;
+            
+            fetch(`/api/edit/${currentEditTaskId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ new_text: newText, reason })
+            })
+            .then(r => r.json())
+            .then(() => {
+                showSuccess('✓ Task edited and approved');
+                closeEditModal();
+                loadQueue();
+            });
+        }
+        
+        function showError(msg) {
+            messageDiv.innerHTML = `<div class="error">${escapeHtml(msg)}</div>`;
+        }
+        
+        function showSuccess(msg) {
+            messageDiv.innerHTML = `<div class="success">${escapeHtml(msg)}</div>`;
+            setTimeout(() => {
+                messageDiv.innerHTML = '';
+            }, 3000);
+        }
+        
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return String(text).replace(/[&<>"']/g, m => map[m]);
+        }
+
+        
+        // Tab switching
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Deactivate all buttons
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab
+            const tabId = tabName + '-tab';
+            document.getElementById(tabId).classList.add('active');
+            
+            // Activate selected button
+            event.target.classList.add('active');
+            
+            // Load OCR if switching to OCR tab
+            if (tabName === 'ocr') {
+                loadOCR();
+            }
+        }
+        
+        function loadOCR() {
+            fetch('/api/documents')
+                .then(r => r.json())
+                .then(data => {
+                    const docs = data.documents || [];
+                    
+                    if (docs.length === 0) {
+                        document.getElementById('ocrContainer').innerHTML = `
+                            <div class="empty-state">
+                                <div class="empty-icon">-</div>
+                                <p>No OCR results yet. Upload a document first.</p>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    // Create document selector
+                    let html = `
+                        <div class="ocr-selector">
+                            <label for="docSelector">Document:</label>
+                            <select id="docSelector" onchange="loadOCRForDocument(this.value)">
+                    `;
+                    
+                    for (const doc of docs) {
+                        html += `<option value="${escapeHtml(doc)}">${escapeHtml(doc)}</option>`;
+                    }
+                    
+                    html += `</select></div><div id="ocrContent"></div>`;
+                    document.getElementById('ocrContainer').innerHTML = html;
+                    
+                    // Load first document
+                    loadOCRForDocument(docs[0]);
+                });
+        }
+        
+        function loadOCRForDocument(docName) {
+            fetch(`/api/ocr/${encodeURIComponent(docName)}/pages`)
+                .then(r => r.json())
+                .then(ocrData => {
+                    renderOCRResults(ocrData, docName);
+                })
+                .catch(err => {
+                    document.getElementById('ocrContent').innerHTML = `<div class="error">Error loading OCR results: ${escapeHtml(err.message)}</div>`;
+                });
+        }
+        
+        function renderOCRResults(ocrData, docName) {
+            const container = document.getElementById('ocrContent');
+            const pages = ocrData.pages || {};
+            
+            if (Object.keys(pages).length === 0) {
+                container.innerHTML = '<div class="empty-state"><p>No OCR blocks found for this document.</p></div>';
+                return;
+            }
+            
+            let html = `<div class="ocr-document-info">
+                <strong>Document:</strong> ${escapeHtml(docName)}<br>
+                <strong>Pages:</strong> ${ocrData.page_count} | 
+                <strong>Total blocks:</strong> ${ocrData.blocks ? ocrData.blocks.length : Object.values(pages).reduce((sum, b) => sum + b.length, 0)}
+            </div>`;
+            
+            // Sort pages by number
+            const sortedPages = Object.keys(pages).sort((a, b) => parseInt(a) - parseInt(b));
+            
+            for (const pageNum of sortedPages) {
+                const blocks = pages[pageNum];
+                html += `<div class="ocr-page-title">Page ${pageNum} (${blocks.length} blocks)</div>`;
+                
+                for (const block of blocks) {
+                    html += `
+                        <div class="ocr-block">
+                            <div class="ocr-block-text">${escapeHtml(block.text)}</div>
+                            <div class="ocr-block-meta">
+                                <span>Block #${block.block_index}</span>
+                                <span>Conf: ${(block.confidence * 100).toFixed(0)}%</span>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        // Load queue on page load
+        loadQueue();
+        setInterval(loadQueue, 2000);
+    </script>
+</body>
+</html>

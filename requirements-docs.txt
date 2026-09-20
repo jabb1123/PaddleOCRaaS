@@ -1,0 +1,23 @@
+# Documentation build dependencies
+# Install with: pip install -r requirements-docs.txt
+
+# Core documentation generator
+mkdocs==1.5.3
+
+# Material theme (modern, professional)
+mkdocs-material==9.4.10
+
+# Search functionality
+mkdocs-search-better-fuse==1.0.0
+
+# Git integration (show last update dates)
+mkdocs-git-revision-date-localized-plugin==1.2.2
+
+# Image zoom/lightbox functionality
+mkdocs-glightbox==0.3.4
+
+# Code highlighting
+Pygments==2.16.1
+
+# Additional extensions
+python-markdown-math==0.8

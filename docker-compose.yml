@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  paddleocraas:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: paddleocraas
+    ports:
+      - "${PADDLEOCR_PORT:-8000}:8000"
+    environment:
+      - PADDLEOCR_HOST=0.0.0.0
+      - PADDLEOCR_PORT=8000
+    volumes:
+      # Optional: Mount data directory for persistent storage
+      - ./data:/app/data
+      # Optional: Mount database
+      - paddleocr_db:/app
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - paddleocr_network
+
+networks:
+  paddleocr_network:
+    driver: bridge
+
+volumes:
+  paddleocr_db:
+    driver: local

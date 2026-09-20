@@ -1,0 +1,105 @@
+site_name: PaddleOCRaaS Documentation
+site_description: AI-powered OCR extraction pipeline for handwritten notes with web interface
+site_url: https://yourusername.github.io/PaddleOCRaaS/
+repo_url: https://github.com/yourusername/PaddleOCRaaS
+repo_name: PaddleOCRaaS
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  logo: assets/logo.png
+  favicon: assets/favicon.ico
+  palette:
+    - scheme: default
+      primary: blue
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - scheme: slate
+      primary: blue
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - toc.integrate
+    - search.suggest
+    - search.highlight
+    - content.action.view
+    - content.code.copy
+    - content.code.annotate
+
+plugins:
+  - search:
+      lang: en
+  - git-revision-date-localized:
+      type: date
+  - glightbox:
+      touchNavigation: true
+      loop: false
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/yourusername/PaddleOCRaaS
+  version:
+    provider: mike
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.emoji:
+      emoji_index: !!python/name:pymdownx.emoji.twemoji
+      emoji_generator: !!python/name:pymdownx.emoji.to_svg
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.arithmatex:
+      generic: true
+  - tables
+  - toc:
+      permalink: true
+  - footnotes
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Quick Start: getting-started/quickstart.md
+    - Installation: getting-started/installation.md
+    - First Steps: getting-started/first-steps.md
+  - Docker:
+    - Overview: docker/overview.md
+    - Quick Start: docker/quickstart.md
+    - Configuration: docker/configuration.md
+    - Compose Setup: docker/docker-compose.md
+  - Deployment:
+    - Local Development: deployment/local-dev.md
+    - Production Server: deployment/production.md
+    - Kubernetes: deployment/kubernetes.md
+    - Cloud Deployment: deployment/cloud.md
+  - Features:
+    - OCR Pipeline: features/ocr-pipeline.md
+    - Web Interface: features/web-ui.md
+    - Task Review System: features/task-review.md
+    - Multi-Document Viewer: features/multi-document.md
+  - Architecture:
+    - System Design: architecture/design.md
+    - Database Schema: architecture/database.md
+    - API Endpoints: architecture/api.md
+  - Development:
+    - Setup Guide: development/setup.md
+    - Contributing: development/contributing.md
+    - Testing: development/testing.md
+    - Troubleshooting: development/troubleshooting.md
+  - API Reference:
+    - REST API: api/rest.md
+    - Endpoints: api/endpoints.md
+  - FAQ: faq.md
