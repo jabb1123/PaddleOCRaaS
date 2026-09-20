@@ -1,6 +1,6 @@
 fastapi==0.141.1
 pymupdf==1.28.2
-numpy>=2.4.6
+numpy>=2.2.6
 opencv_contrib_python==4.10.0.84
 paddleocr==3.7.0
 pydantic==2.13.5
